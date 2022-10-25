@@ -86,7 +86,7 @@ class MonoQA(TransformerBase):
             scores += F.log_softmax(result, dim=1)[:, 0].cpu().detach().tolist()
         run = run.drop(columns=['score', 'rank'], errors='ignore').assign(score=scores)
         run = add_ranks(run)
-        run['answer'] = run.apply(qa, axis=1)
+        run['answer'] = run.apply(self.qa, axis=1)
         return run
 
 
