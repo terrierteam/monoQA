@@ -42,7 +42,7 @@ class MonoQA(TransformerBase):
         res = self.model.generate(input_ids)
         return self.tokenizer.batch_decode(res, skip_special_tokens=True)
     def qa(self, row):
-        q, d, rank = row['query'], row['self.text_field'], row['rank']
+        q, d, rank = row['query'], row[self.text_field], row['rank']
         if rank >= self.top_k:
             return ' '
         enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt',  padding='longest')
