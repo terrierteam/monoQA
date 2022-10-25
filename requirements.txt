@@ -1,7 +1,5 @@
-transformers==2.3.0
+python-terrier>=0.5.0
+pandas
+transformers>=4.0.0
 torch
-pytrec-eval
-faiss-gpu
-sklearn
-tensorboardX
-trec-car-tools
+sentencepiece>=0.1.95
