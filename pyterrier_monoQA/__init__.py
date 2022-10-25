@@ -42,11 +42,10 @@ class MonoQA(TransformerBase):
         res = self.model.generate(input_ids)
         return self.tokenizer.batch_decode(res, skip_special_tokens=True)
     def qa(self, row):
-    	
-    	q, d, rank = row['query'], row['self.text_field'], row['rank']
-    	if rank >= self.top_k:
-    	    return ' '
-    	enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt', padding=True, max_length=max_input_length)
+        q, d, rank = row['query'], row['self.text_field'], row['rank']
+        if rank >= self.top_k:
+            return ' '
+        enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt', padding=True, max_length=max_input_length)
 
         input_ids  = enc['input_ids'].to(self.device)
         set_seed(42)
@@ -62,24 +61,16 @@ class MonoQA(TransformerBase):
             num_return_sequences=1
         )
         return self.tokenizer.batch_decode(beam_outputs, skip_special_tokens=True,clean_up_tokenization_spaces=True)
-        #final_outputs =[]
-        #for beam_output in beam_outputs:
-        #    sent = self.tokenizer.decode(beam_output, skip_special_tokens=True,clean_up_tokenization_spaces=True)
-        #    final_outputs.append(sent)
-        #return final_outputs
     def transform(self, run):
         scores = []
         answers = []
         queries, texts = run['query'], run[self.text_field]
         max_input_length = 512
         it = range(0, len(queries), self.batch_size)
-#         prompts = self.tokenizer.batch_encode_plus([f'Relevant:' for _ in range(self.batch_size)], return_tensors='pt', padding='longest')
-#         max_vlen = self.model.config.n_positions - prompts['input_ids'].shape[1]
         if self.verbose:
             it = pt.tqdm(it, desc='monoT5', unit='batches')
         for start_idx in it:
             rng = slice(start_idx, start_idx+self.batch_size) # same as start_idx:start_idx+self.batch_size
-#             enc = self.tokenizer.batch_encode_plus([f'Question: {q} Passage: {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding='longest')
             enc = self.tokenizer.batch_encode_plus([f'Question Answering: {q} <extra_id_0> {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding=True, max_length=max_input_length)
 
             input_ids  = enc['input_ids'].to(self.device)
@@ -94,8 +85,6 @@ class MonoQA(TransformerBase):
                 result = self.model(**enc).logits
             result = result[:, 0, (self.REL, self.NREL)]
             scores += F.log_softmax(result, dim=1)[:, 0].cpu().detach().tolist()
-            #answers.extend(self.run_model(input_ids))
-#             answers.extend(self.qr(input_ids))
         run = run.drop(columns=['score', 'rank'], errors='ignore').assign(score=scores)
         run = run.assign(answer=answers)
         run = add_ranks(run)
