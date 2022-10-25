@@ -60,14 +60,15 @@ class MonoQA(TransformerBase):
             num_beams=4,
             num_return_sequences=1
         )
-        return self.tokenizer.batch_decode(beam_outputs, skip_special_tokens=True,clean_up_tokenization_spaces=True)
+        res = self.tokenizer.batch_decode(beam_outputs, skip_special_tokens=True,clean_up_tokenization_spaces=True)[0]
+        return ' '.join(res.split()[1:])
     def transform(self, run):
         scores = []
         queries, texts = run['query'], run[self.text_field]
         max_input_length = 512
         it = range(0, len(queries), self.batch_size)
         if self.verbose:
-            it = pt.tqdm(it, desc='monoT5', unit='batches')
+            it = pt.tqdm(it, desc='monoQA', unit='batches')
         for start_idx in it:
             rng = slice(start_idx, start_idx+self.batch_size) # same as start_idx:start_idx+self.batch_size
             enc = self.tokenizer.batch_encode_plus([f'Question Answering: {q} <extra_id_0> {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding='longest')
@@ -86,7 +87,8 @@ class MonoQA(TransformerBase):
             scores += F.log_softmax(result, dim=1)[:, 0].cpu().detach().tolist()
         run = run.drop(columns=['score', 'rank'], errors='ignore').assign(score=scores)
         run = add_ranks(run)
-        run['answer'] = run.apply(self.qa, axis=1)
+        run['answer'] = run.progress_apply(self.qa, axis=1)
+        run = run.sort_values(by=['qid', 'rank'], ascending=True)
         return run
 
 
