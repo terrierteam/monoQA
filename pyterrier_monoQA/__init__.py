@@ -16,10 +16,11 @@ from transformers import set_seed
 
 class MonoQA(TransformerBase):
     def __init__(self, 
-                 tok_model='t5-base',
-                 model='castorini/monot5-base-msmarco',
+                 tok_model='9meo/monoQA',
+                 model='9meo/monoQA',
                  batch_size=4,
                  text_field='text',
+                 top_k = 5
                  verbose=True):
         self.verbose = verbose
         self.batch_size = batch_size
@@ -30,6 +31,7 @@ class MonoQA(TransformerBase):
         self.model.to(self.device)
         self.model.eval()
         self.text_field = text_field
+        self.top_k = top_k
         self.REL = self.tokenizer.encode('true')[0]
         self.NREL = self.tokenizer.encode('false')[0]
 
@@ -39,7 +41,14 @@ class MonoQA(TransformerBase):
     def run_model(self, input_ids):
         res = self.model.generate(input_ids)
         return self.tokenizer.batch_decode(res, skip_special_tokens=True)
-    def qr(self, input_ids):
+    def qa(self, row):
+    	
+    	q, d, rank = row['query'], row['self.text_field'], row['rank']
+    	if rank >= self.top_k:
+    	    return ' '
+    	enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt', padding=True, max_length=max_input_length)
+
+        input_ids  = enc['input_ids'].to(self.device)
         set_seed(42)
         beam_outputs = self.model.generate(
             input_ids=input_ids,# attention_mask=attention_masks,
@@ -49,14 +58,15 @@ class MonoQA(TransformerBase):
             top_k=60,
             top_p=0.98,
             early_stopping=True,
-            num_beams=1,
+            num_beams=4,
             num_return_sequences=1
         )
-        final_outputs =[]
-        for beam_output in beam_outputs:
-            sent = self.tokenizer.decode(beam_output, skip_special_tokens=True,clean_up_tokenization_spaces=True)
-            final_outputs.append(sent)
-        return final_outputs
+        return self.tokenizer.batch_decode(beam_outputs, skip_special_tokens=True,clean_up_tokenization_spaces=True)
+        #final_outputs =[]
+        #for beam_output in beam_outputs:
+        #    sent = self.tokenizer.decode(beam_output, skip_special_tokens=True,clean_up_tokenization_spaces=True)
+        #    final_outputs.append(sent)
+        #return final_outputs
     def transform(self, run):
         scores = []
         answers = []
@@ -71,10 +81,7 @@ class MonoQA(TransformerBase):
             rng = slice(start_idx, start_idx+self.batch_size) # same as start_idx:start_idx+self.batch_size
 #             enc = self.tokenizer.batch_encode_plus([f'Question: {q} Passage: {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding='longest')
             enc = self.tokenizer.batch_encode_plus([f'Question Answering: {q} <extra_id_0> {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding=True, max_length=max_input_length)
-#             for key, enc_value in list(enc.items()):
-#                 enc_value = enc_value[:, :-1] # chop off end of sequence token-- this will be added with the prompt
-#                 enc_value = enc_value[:, :max_vlen] # truncate any tokens that will not fit once the prompt is added
-#                 enc[key] = torch.cat([enc_value, prompts[key][:enc_value.shape[0]]], dim=1) # add in the prompt to the end
+
             input_ids  = enc['input_ids'].to(self.device)
             enc['decoder_input_ids'] = torch.full(
                 (len(queries[rng]), 1),
@@ -87,11 +94,12 @@ class MonoQA(TransformerBase):
                 result = self.model(**enc).logits
             result = result[:, 0, (self.REL, self.NREL)]
             scores += F.log_softmax(result, dim=1)[:, 0].cpu().detach().tolist()
-            answers.extend(self.run_model(input_ids))
+            #answers.extend(self.run_model(input_ids))
 #             answers.extend(self.qr(input_ids))
         run = run.drop(columns=['score', 'rank'], errors='ignore').assign(score=scores)
         run = run.assign(answer=answers)
         run = add_ranks(run)
+        run['answer'] = run.apply(qa, axis=1)
         return run
 
 
