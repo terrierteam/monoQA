@@ -20,7 +20,7 @@ class MonoQA(TransformerBase):
                  model='9meo/monoQA',
                  batch_size=4,
                  text_field='text',
-                 top_k = 5
+                 top_k = 5,
                  verbose=True):
         self.verbose = verbose
         self.batch_size = batch_size
