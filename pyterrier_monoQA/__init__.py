@@ -45,7 +45,7 @@ class MonoQA(TransformerBase):
         q, d, rank = row['query'], row['self.text_field'], row['rank']
         if rank >= self.top_k:
             return ' '
-        enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt', padding=True, max_length=max_input_length)
+        enc = self.tokenizer.encode_plus(f'Question Answering: {q} <extra_id_0> {d}', return_tensors='pt', return_tensors='pt', padding='longest')
 
         input_ids  = enc['input_ids'].to(self.device)
         set_seed(42)
@@ -71,7 +71,7 @@ class MonoQA(TransformerBase):
             it = pt.tqdm(it, desc='monoT5', unit='batches')
         for start_idx in it:
             rng = slice(start_idx, start_idx+self.batch_size) # same as start_idx:start_idx+self.batch_size
-            enc = self.tokenizer.batch_encode_plus([f'Question Answering: {q} <extra_id_0> {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', padding=True, max_length=max_input_length)
+            enc = self.tokenizer.batch_encode_plus([f'Question Answering: {q} <extra_id_0> {d}' for q, d in zip(queries[rng], texts[rng])], return_tensors='pt', return_tensors='pt', padding='longest')
 
             input_ids  = enc['input_ids'].to(self.device)
             enc['decoder_input_ids'] = torch.full(

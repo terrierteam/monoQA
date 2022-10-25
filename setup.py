@@ -15,7 +15,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="pyterrier-monoQA",
+    name="monoQA",
     version="0.0.1",
     author="Sarawoot Kongyoung",
     author_email='s.kongyoung.1{at}research.glasgow.ac.uk',
