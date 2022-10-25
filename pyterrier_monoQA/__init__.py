@@ -63,7 +63,6 @@ class MonoQA(TransformerBase):
         return self.tokenizer.batch_decode(beam_outputs, skip_special_tokens=True,clean_up_tokenization_spaces=True)
     def transform(self, run):
         scores = []
-        answers = []
         queries, texts = run['query'], run[self.text_field]
         max_input_length = 512
         it = range(0, len(queries), self.batch_size)
@@ -86,7 +85,6 @@ class MonoQA(TransformerBase):
             result = result[:, 0, (self.REL, self.NREL)]
             scores += F.log_softmax(result, dim=1)[:, 0].cpu().detach().tolist()
         run = run.drop(columns=['score', 'rank'], errors='ignore').assign(score=scores)
-        run = run.assign(answer=answers)
         run = add_ranks(run)
         run['answer'] = run.apply(qa, axis=1)
         return run
