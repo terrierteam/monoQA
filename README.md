@@ -6,8 +6,40 @@ This is the [PyTerrier](https://github.com/terrier-org/pyterrier) plugin for the
 
 This repostory can be installed using Pip.
 
+```bash
     pip install --upgrade git+https://github.com/terrierteam/monoQA.git
+```
     
+You can then import the package in Python after importing pyterrier:
+
+```python
+import pyterrier as pt
+pt.init()
+import pyterrier_dr
+```
+
+## Inference
+
+For instance, to load up a monoQA model,
+
+```python
+from pyterrier_monoQA import MonoQA
+monoqa = MonoQA(top_k=10) # loads 9meo/monoQA by default
+```
+
+To use monoQA to rerank and extract an answer.
+
+```python
+import pandas as pd
+monoqa(pd.DataFrame([
+    {"qid":"1", "docno":"8172" ,"query":"measurement of dielectric constant of liquids by the use of microwave techniques","text":"microwave spectroscopy  includes chapters on spectroscope technique\\nand design on measurements on gases liquids and solids on nuclear\\nproperties on molecular structure and on further possible applications\\nof microwaves\\n"},
+    {"qid":"2", "docno":"4330","query":"mathematical analysis and design details of waveguide fed microwave radiations","text":"a step by step method for designing waveguides and oscillatory systems\\n","score":-0.4900564551,"rank":0,"answer":"step by step method for designing waveguides and oscillatory systems"}
+ ]))
+# qid	docno	query	                                                text	                                                answer	                                                score	       rank
+#   1	8172	measurement of dielectric constant of liquids ...	microwave spectroscopy includes chapters on s...	microwave spectroscopy includes chapters on sp...	-0.289365	0
+#   2	4330	mathematical analysis and design details of wa...	a step by step method for designing waveguides...	a step by step method for designing waveguides...	-0.585294	0
+``` 
+
 ## Building monoQA pipelines
 
 
