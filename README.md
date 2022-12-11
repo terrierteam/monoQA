@@ -1,41 +1,3 @@
-# monoQA
-This repo contains code and data for EMNLP 2022 paper "monoQA: Multi-Task Learning of Reranking and Answer Extraction for Open-Retrieval Conversational Question Answering"
-## Prerequisites
-
-Install dependencies:
-
-```bash
-git clone https://github.com/thunlp/ConvDR.git
-cd monoQA
-pip install -r requirements.txt
-```
-## Data Preparation
-
-By default, we expect raw data to be stored in `./datasets/raw` and processed data to be stored in `./datasets`:
-
-```bash
-mkdir datasets
-```
-
-### OR-QuAC
-
-#### OR-QuAC files download
-
-Download necessary OR-QuAC files and store them into `./datasets/or-quac`:
-
-```bash
-mkdir datasets/or-quac
-cd datasets/or-quac
-wget https://ciir.cs.umass.edu/downloads/ORConvQA/all_blocks.txt.gz
-wget https://ciir.cs.umass.edu/downloads/ORConvQA/qrels.txt.gz
-gzip -d *.txt.gz
-mkdir preprocessed
-cd preprocessed
-wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/train.txt
-wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/test.txt
-wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/dev.txt
-```
-
 # PyTerrier_monoQA
 
 This is the [PyTerrier](https://github.com/terrier-org/pyterrier) plugin for the [monoQA]() ranking and answer extracting approaches
@@ -82,6 +44,45 @@ We use a PyTerrier transformer to score documents using a T5 model.
 
 Sequences longer than the model's maximum of 512 tokens are silently truncated. Consider splitting long texts
 into passages and aggregating the results ([examples](https://pyterrier.readthedocs.io/en/latest/text.html#working-with-passages-rather-than-documents)).
+
+# monoQA
+This repo contains code and data for EMNLP 2022 paper "monoQA: Multi-Task Learning of Reranking and Answer Extraction for Open-Retrieval Conversational Question Answering"
+## Prerequisites
+
+Install dependencies:
+
+```bash
+git clone https://github.com/thunlp/ConvDR.git
+cd monoQA
+pip install -r requirements.txt
+```
+## Data Preparation
+
+By default, we expect raw data to be stored in `./datasets/raw` and processed data to be stored in `./datasets`:
+
+```bash
+mkdir datasets
+```
+
+### OR-QuAC
+
+#### OR-QuAC files download
+
+Download necessary OR-QuAC files and store them into `./datasets/or-quac`:
+
+```bash
+mkdir datasets/or-quac
+cd datasets/or-quac
+wget https://ciir.cs.umass.edu/downloads/ORConvQA/all_blocks.txt.gz
+wget https://ciir.cs.umass.edu/downloads/ORConvQA/qrels.txt.gz
+gzip -d *.txt.gz
+mkdir preprocessed
+cd preprocessed
+wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/train.txt
+wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/test.txt
+wget https://ciir.cs.umass.edu/downloads/ORConvQA/preprocessed/dev.txt
+```
+
 
 ## References
 
